@@ -1,0 +1,7 @@
+export class CreateIncomeDto {
+  source!: string;
+
+  amount!: number;
+
+  date!: string;
+}
