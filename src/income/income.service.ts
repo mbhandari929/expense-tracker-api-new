@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateIncomeDto } from './dto/create-income.dto';
@@ -21,15 +25,43 @@ export class IncomeService {
     return this.incomeRepository.find();
   }
 
-  findOne(id: number) {
-    return this.incomeRepository.findOneBy({ id });
+  async findOne(id: number) {
+  if (!Number.isInteger(id)) {
+    throw new BadRequestException("Invalid income ID");
   }
 
-  update(id: number, updateIncomeDto: UpdateIncomeDto) {
-    return this.incomeRepository.update(id, updateIncomeDto);
+  const income = await this.incomeRepository.findOneBy({ id });
+
+  if (!income) {
+    throw new NotFoundException(`Income with ID ${id} not found`);
   }
 
-  remove(id: number) {
-    return this.incomeRepository.delete(id);
+  return income;
+}
+
+async update(id: number, updateIncomeDto: UpdateIncomeDto) {
+  if (!Number.isInteger(id)) {
+    throw new BadRequestException("Invalid income ID");
   }
+
+  const income = await this.incomeRepository.preload({
+    id,
+    ...updateIncomeDto,
+  });
+
+  if (!income) {
+    throw new NotFoundException(`Income with ID ${id} not found`);
+  }
+
+  return this.incomeRepository.save(income);
+}
+
+async remove(id: number) {
+  if (!Number.isInteger(id)) {
+    throw new BadRequestException("Invalid income ID");
+  }
+
+  const income = await this.findOne(id);
+  return this.incomeRepository.remove(income);
+}
 }
