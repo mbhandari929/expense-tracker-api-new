@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { IncomeModule } from './income/income.module';
 import { ExpenseModule } from './expense/expense.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ExpenseModule } from './expense/expense.module';
     }),
     IncomeModule,
      ExpenseModule,
+     SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
