@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { IncomeModule } from './income/income.module';
 import { ExpenseModule } from './expense/expense.module';
 import { SettingsModule } from './settings/settings.module';
+import { BackupModule } from './backup/backup.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SettingsModule } from './settings/settings.module';
     IncomeModule,
      ExpenseModule,
      SettingsModule,
+     BackupModule,
   ],
   controllers: [AppController],
   providers: [AppService],
