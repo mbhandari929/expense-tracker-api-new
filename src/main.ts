@@ -10,11 +10,12 @@ app.useGlobalPipes(
   }),
 );
   app.enableCors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
-  });
-
+  origin: (process.env.CORS_ORIGIN ?? "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim()),
+  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+});
   await app.listen(process.env.PORT ?? 3000);
 }
 

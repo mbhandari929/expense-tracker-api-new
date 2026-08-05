@@ -1,13 +1,9 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Expense } from "./entities/expense.entity";
 import { CreateExpenseDto } from "./dto/create-expense.dto";
 import { UpdateExpenseDto } from "./dto/update-expense.dto";
+import { Expense } from "./entities/expense.entity";
 
 @Injectable()
 export class ExpenseService {
@@ -26,10 +22,6 @@ export class ExpenseService {
   }
 
   async findOne(id: number) {
-    if (!Number.isInteger(id)) {
-      throw new BadRequestException("Invalid expense ID");
-    }
-
     const expense = await this.expenseRepository.findOneBy({ id });
 
     if (!expense) {
@@ -40,10 +32,6 @@ export class ExpenseService {
   }
 
   async update(id: number, updateExpenseDto: UpdateExpenseDto) {
-    if (!Number.isInteger(id)) {
-      throw new BadRequestException("Invalid expense ID");
-    }
-
     const expense = await this.expenseRepository.preload({
       id,
       ...updateExpenseDto,
@@ -57,12 +45,7 @@ export class ExpenseService {
   }
 
   async remove(id: number) {
-    if (!Number.isInteger(id)) {
-      throw new BadRequestException("Invalid expense ID");
-    }
-
     const expense = await this.findOne(id);
-
     return this.expenseRepository.remove(expense);
   }
 }

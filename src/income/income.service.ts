@@ -1,13 +1,9 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { CreateIncomeDto } from './dto/create-income.dto';
-import { UpdateIncomeDto } from './dto/update-income.dto';
-import { Income } from './entities/income.entity';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { CreateIncomeDto } from "./dto/create-income.dto";
+import { UpdateIncomeDto } from "./dto/update-income.dto";
+import { Income } from "./entities/income.entity";
 
 @Injectable()
 export class IncomeService {
@@ -26,42 +22,30 @@ export class IncomeService {
   }
 
   async findOne(id: number) {
-  if (!Number.isInteger(id)) {
-    throw new BadRequestException("Invalid income ID");
+    const income = await this.incomeRepository.findOneBy({ id });
+
+    if (!income) {
+      throw new NotFoundException(`Income with ID ${id} not found`);
+    }
+
+    return income;
   }
 
-  const income = await this.incomeRepository.findOneBy({ id });
+  async update(id: number, updateIncomeDto: UpdateIncomeDto) {
+    const income = await this.incomeRepository.preload({
+      id,
+      ...updateIncomeDto,
+    });
 
-  if (!income) {
-    throw new NotFoundException(`Income with ID ${id} not found`);
+    if (!income) {
+      throw new NotFoundException(`Income with ID ${id} not found`);
+    }
+
+    return this.incomeRepository.save(income);
   }
 
-  return income;
-}
-
-async update(id: number, updateIncomeDto: UpdateIncomeDto) {
-  if (!Number.isInteger(id)) {
-    throw new BadRequestException("Invalid income ID");
+  async remove(id: number) {
+    const income = await this.findOne(id);
+    return this.incomeRepository.remove(income);
   }
-
-  const income = await this.incomeRepository.preload({
-    id,
-    ...updateIncomeDto,
-  });
-
-  if (!income) {
-    throw new NotFoundException(`Income with ID ${id} not found`);
-  }
-
-  return this.incomeRepository.save(income);
-}
-
-async remove(id: number) {
-  if (!Number.isInteger(id)) {
-    throw new BadRequestException("Invalid income ID");
-  }
-
-  const income = await this.findOne(id);
-  return this.incomeRepository.remove(income);
-}
 }

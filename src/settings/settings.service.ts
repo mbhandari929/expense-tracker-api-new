@@ -12,21 +12,21 @@ export class SettingsService {
   ) {}
 
   async findOne() {
-    let settings = await this.settingsRepository.findOneBy({ id: 1 });
-
-    if (!settings) {
-      settings = this.settingsRepository.create({
+    await this.settingsRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Settings)
+      .values({
         id: 1,
         openingBalance: 0,
         incomeSources: ["Salary", "Bonus", "Other"],
         expenseSources: ["Food", "Rent", "Transport", "Other"],
         monthlyBudgets: {},
-      });
+      })
+      .orIgnore()
+      .execute();
 
-      settings = await this.settingsRepository.save(settings);
-    }
-
-    return settings;
+    return this.settingsRepository.findOneByOrFail({ id: 1 });
   }
 
   async update(updateSettingsDto: UpdateSettingsDto) {

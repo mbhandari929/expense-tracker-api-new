@@ -14,7 +14,8 @@ export class BackupService {
       await manager.clear(Income);
       await manager.clear(Expense);
       await manager.clear(Settings);
-
+// Transaction IDs are intentionally regenerated during restore.
+// The frontend replaces its state with the saved records returned below.
       const incomes = manager.create(
         Income,
         restoreBackupDto.incomes.map((item) => ({

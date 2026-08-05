@@ -7,9 +7,11 @@ A NestJS backend API for the Expense Tracker application.
 - Income CRUD
 - Expense CRUD
 - Settings API
+- Atomic JSON backup restore
 - Request validation
-- SQLite database
-- Frontend CORS support
+- SQLite database with TypeORM
+- Configurable CORS
+- Backup restore security guard
 
 ## Setup
 
@@ -19,7 +21,35 @@ Install dependencies:
 npm install
 ```
 
-Start the backend:
+## Environment Variables
+
+PowerShell:
+
+```powershell
+$env:CORS_ORIGIN="http://localhost:5173"
+$env:BACKUP_API_KEY="your-private-key"
+npm run start:dev
+```
+
+`CORS_ORIGIN` specifies the frontend URL allowed to access the backend.
+
+The default value is:
+
+```text
+http://localhost:5173
+```
+
+Multiple origins can be separated using commas:
+
+```powershell
+$env:CORS_ORIGIN="http://localhost:5173,https://your-frontend.example.com"
+```
+
+During development, backup restore can run without an API key.
+
+In production, `BACKUP_API_KEY` is required. Without it, backup restore is disabled.
+
+## Start the Backend
 
 ```bash
 npm run start:dev
@@ -57,6 +87,8 @@ Example:
 }
 ```
 
+Income amounts must be greater than `0`.
+
 ## Expense API
 
 ```text
@@ -77,6 +109,8 @@ Example:
 }
 ```
 
+Expense amounts must be greater than `0`.
+
 ## Settings API
 
 ```text
@@ -90,6 +124,62 @@ The settings API stores:
 - Income sources
 - Expense sources
 - Monthly budgets
+
+Example:
+
+```json
+{
+  "openingBalance": 100000,
+  "incomeSources": ["Salary", "Bonus", "Other"],
+  "expenseSources": ["Food", "Rent", "Transport", "Other"],
+  "monthlyBudgets": {
+    "2026-08": 200000
+  }
+}
+```
+
+Monthly-budget keys must use the `YYYY-MM` format.
+
+Monthly-budget values must be non-negative numbers.
+
+The settings record uses ID `1`.
+
+## Backup Restore API
+
+```text
+PUT /backup/restore
+```
+
+When `BACKUP_API_KEY` is configured, include this request header:
+
+```text
+X-API-Key: your-private-key
+```
+
+Restore replaces the existing:
+
+- Income transactions
+- Expense transactions
+- Settings
+
+The restore runs inside one database transaction.
+
+If restoration fails, all changes are rolled back.
+
+Transaction IDs are intentionally regenerated during restore. The frontend must use the new records and IDs returned by the backend.
+
+## CORS
+
+Allowed HTTP methods:
+
+```text
+GET
+POST
+PATCH
+PUT
+DELETE
+OPTIONS
+```
 
 ## Database
 

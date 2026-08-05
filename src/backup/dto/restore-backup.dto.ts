@@ -4,11 +4,11 @@ import {
   IsDateString,
   IsNotEmpty,
   IsNumber,
-  IsObject,
   IsPositive,
   IsString,
   ValidateNested,
 } from "class-validator";
+import { IsMonthlyBudgets } from "../../common/validators/is-monthly-budgets.validator";
 
 class RestoreTransactionDto {
   @IsString()
@@ -45,6 +45,6 @@ export class RestoreBackupDto {
   @IsString({ each: true })
   expenseSources!: string[];
 
-  @IsObject()
+  @IsMonthlyBudgets()
   monthlyBudgets!: Record<string, number>;
 }

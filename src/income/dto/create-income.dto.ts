@@ -9,7 +9,7 @@ import {
 export class CreateIncomeDto {
   @IsString()
   @IsNotEmpty()
-text!: string;
+  text!: string;
 
   @IsNumber()
   @IsPositive()

@@ -1,10 +1,10 @@
 import {
   IsArray,
   IsNumber,
-  IsObject,
   IsOptional,
   IsString,
 } from "class-validator";
+import { IsMonthlyBudgets } from "../../common/validators/is-monthly-budgets.validator";
 
 export class UpdateSettingsDto {
   @IsOptional()
@@ -22,6 +22,6 @@ export class UpdateSettingsDto {
   expenseSources?: string[];
 
   @IsOptional()
-  @IsObject()
+  @IsMonthlyBudgets()
   monthlyBudgets?: Record<string, number>;
 }
