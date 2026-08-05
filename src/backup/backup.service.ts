@@ -32,14 +32,13 @@ export class BackupService {
           date: item.date,
         })),
       );
-
       const settings = manager.create(Settings, {
+        id: 1,
         openingBalance: restoreBackupDto.openingBalance,
         incomeSources: restoreBackupDto.incomeSources,
         expenseSources: restoreBackupDto.expenseSources,
         monthlyBudgets: restoreBackupDto.monthlyBudgets,
       });
-
       const savedIncomes = await manager.save(Income, incomes);
       const savedExpenses = await manager.save(Expense, expenses);
       const savedSettings = await manager.save(Settings, settings);
