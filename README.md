@@ -194,3 +194,11 @@ expense.db
 ```text
 https://github.com/mbhandari929/expense-tracker
 ```
+## Environment variables
+
+Create a `.env` file in the project root.
+
+```env
+NODE_ENV=development
+API_KEY=your-secret-api-key
+DATABASE_PATH=expense.db
