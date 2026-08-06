@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common";
-import { DataSource } from "typeorm";
-import { Expense } from "../expense/entities/expense.entity";
-import { Income } from "../income/entities/income.entity";
-import { Settings } from "../settings/entities/settings.entity";
-import { RestoreBackupDto } from "./dto/restore-backup.dto";
+import { Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { Expense } from '../expense/entities/expense.entity';
+import { Income } from '../income/entities/income.entity';
+import { Settings } from '../settings/entities/settings.entity';
+import { RestoreBackupDto } from './dto/restore-backup.dto';
 
 @Injectable()
 export class BackupService {
@@ -14,8 +14,8 @@ export class BackupService {
       await manager.clear(Income);
       await manager.clear(Expense);
       await manager.clear(Settings);
-// Transaction IDs are intentionally regenerated during restore.
-// The frontend replaces its state with the saved records returned below.
+      // Transaction IDs are intentionally regenerated during restore.
+      // The frontend replaces its state with the saved records returned below.
       const incomes = manager.create(
         Income,
         restoreBackupDto.incomes.map((item) => ({
@@ -45,7 +45,7 @@ export class BackupService {
       const savedSettings = await manager.save(Settings, settings);
 
       return {
-        message: "Backup restored successfully",
+        message: 'Backup restored successfully',
         incomes: savedIncomes,
         expenses: savedExpenses,
         settings: savedSettings,

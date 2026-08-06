@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   UnauthorizedException,
-} from "@nestjs/common";
+} from '@nestjs/common';
 
 @Injectable()
 export class BackupApiKeyGuard implements CanActivate {
@@ -12,9 +12,9 @@ export class BackupApiKeyGuard implements CanActivate {
     const configuredApiKey = process.env.BACKUP_API_KEY;
 
     if (!configuredApiKey) {
-      if (process.env.NODE_ENV === "production") {
+      if (process.env.NODE_ENV === 'production') {
         throw new ForbiddenException(
-          "Backup restore is disabled in production",
+          'Backup restore is disabled in production',
         );
       }
 
@@ -25,13 +25,13 @@ export class BackupApiKeyGuard implements CanActivate {
       headers: Record<string, string | string[] | undefined>;
     }>();
 
-    const headerValue = request.headers["x-api-key"];
+    const headerValue = request.headers['x-api-key'];
     const requestApiKey = Array.isArray(headerValue)
       ? headerValue[0]
       : headerValue;
 
     if (requestApiKey !== configuredApiKey) {
-      throw new UnauthorizedException("Invalid backup API key");
+      throw new UnauthorizedException('Invalid backup API key');
     }
 
     return true;

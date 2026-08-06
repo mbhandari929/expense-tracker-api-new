@@ -1,10 +1,5 @@
-import {
-  IsArray,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from "class-validator";
-import { IsMonthlyBudgets } from "../../common/validators/is-monthly-budgets.validator";
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsMonthlyBudgets } from '../../common/validators/is-monthly-budgets.validator';
 
 export class UpdateSettingsDto {
   @IsOptional()

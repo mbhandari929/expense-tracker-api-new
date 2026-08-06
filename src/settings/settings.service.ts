@@ -1,8 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { UpdateSettingsDto } from "./dto/update-settings.dto";
-import { Settings } from "./entities/settings.entity";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
+import { Settings } from './entities/settings.entity';
 
 @Injectable()
 export class SettingsService {
@@ -19,8 +19,8 @@ export class SettingsService {
       .values({
         id: 1,
         openingBalance: 0,
-        incomeSources: ["Salary", "Bonus", "Other"],
-        expenseSources: ["Food", "Rent", "Transport", "Other"],
+        incomeSources: ['Salary', 'Bonus', 'Other'],
+        expenseSources: ['Food', 'Rent', 'Transport', 'Other'],
         monthlyBudgets: {},
       })
       .orIgnore()

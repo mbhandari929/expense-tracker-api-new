@@ -4,7 +4,7 @@ import {
   IsNumber,
   IsPositive,
   IsString,
-} from "class-validator";
+} from 'class-validator';
 
 export class CreateIncomeDto {
   @IsString()
