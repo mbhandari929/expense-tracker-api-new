@@ -23,11 +23,19 @@ npm install
 
 ## Environment Variables
 
+Create a `.env` file from `.env.example`:
+
+```powershell
+Copy-Item .env.example .env
+
 PowerShell:
 
 ```powershell
 $env:CORS_ORIGIN="http://localhost:5173"
-$env:BACKUP_API_KEY="your-private-key"
+$env:API_KEY="your-api-key-here"
+
+The frontend `VITE_API_KEY` must use the same value as the backend `API_KEY`.
+
 npm run start:dev
 ```
 
@@ -45,9 +53,7 @@ Multiple origins can be separated using commas:
 $env:CORS_ORIGIN="http://localhost:5173,https://your-frontend.example.com"
 ```
 
-During development, backup restore can run without an API key.
 
-In production, `BACKUP_API_KEY` is required. Without it, backup restore is disabled.
 
 ## Start the Backend
 
@@ -150,10 +156,11 @@ The settings record uses ID `1`.
 PUT /backup/restore
 ```
 
-When `BACKUP_API_KEY` is configured, include this request header:
+
+
 
 ```text
-X-API-Key: your-private-key
+X-API-Key: your-api-key-here
 ```
 
 Restore replaces the existing:
@@ -194,11 +201,3 @@ expense.db
 ```text
 https://github.com/mbhandari929/expense-tracker
 ```
-## Environment variables
-
-Create a `.env` file in the project root.
-
-```env
-NODE_ENV=development
-API_KEY=your-secret-api-key
-DATABASE_PATH=expense.db
