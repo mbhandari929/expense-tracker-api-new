@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+
+import { SettingsService } from '../settings/settings.service';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
@@ -12,6 +14,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async register(email: string, password: string) {
@@ -29,6 +32,8 @@ export class AuthService {
       normalizedEmail,
       hashedPassword,
     );
+
+    await this.settingsService.createDefault(user.id);
 
     return {
       id: user.id,
@@ -56,8 +61,10 @@ export class AuthService {
       email: user.email,
     };
 
+    const accessToken = await this.jwtService.signAsync(payload);
+
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: accessToken,
     };
   }
 }

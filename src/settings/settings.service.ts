@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { Settings } from './entities/settings.entity';
-import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class SettingsService {
@@ -12,8 +12,20 @@ export class SettingsService {
     private readonly settingsRepository: Repository<Settings>,
   ) {}
 
+  async createDefault(userId: number) {
+    const settings = this.settingsRepository.create({
+      openingBalance: 0,
+      incomeSources: ['Salary', 'Bonus', 'Other'],
+      expenseSources: ['Food', 'Rent', 'Transport', 'Other'],
+      monthlyBudgets: {},
+      user: { id: userId } as User,
+    });
+
+    return this.settingsRepository.save(settings);
+  }
+
   async findOne(userId: number) {
-    let settings = await this.settingsRepository.findOne({
+    const settings = await this.settingsRepository.findOne({
       where: {
         user: {
           id: userId,
@@ -22,15 +34,7 @@ export class SettingsService {
     });
 
     if (!settings) {
-      settings = this.settingsRepository.create({
-        openingBalance: 0,
-        incomeSources: ['Salary', 'Bonus', 'Other'],
-        expenseSources: ['Food', 'Rent', 'Transport', 'Other'],
-        monthlyBudgets: {},
-        user: { id: userId } as User,
-      });
-
-      settings = await this.settingsRepository.save(settings);
+      throw new NotFoundException('Settings not found');
     }
 
     return settings;
