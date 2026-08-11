@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Settings {
@@ -16,4 +23,11 @@ export class Settings {
 
   @Column({ type: 'simple-json' })
   monthlyBudgets!: Record<string, number>;
+
+  @OneToOne(() => User, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'userId' })
+  user?: User;
 }

@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BackupModule } from './backup/backup.module';
-import { ApiKeyGuard } from './common/guards/api-key.guard';
 import { ExpenseModule } from './expense/expense.module';
 import { IncomeModule } from './income/income.module';
 import { SettingsModule } from './settings/settings.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -31,16 +31,12 @@ import { SettingsModule } from './settings/settings.module';
     ExpenseModule,
     SettingsModule,
     BackupModule,
+    UsersModule,
+    AuthModule,
   ],
 
   controllers: [AppController],
 
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ApiKeyGuard,
-    },
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

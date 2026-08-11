@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { Settings } from './entities/settings.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class SettingsService {
@@ -11,26 +12,32 @@ export class SettingsService {
     private readonly settingsRepository: Repository<Settings>,
   ) {}
 
-  async findOne() {
-    await this.settingsRepository
-      .createQueryBuilder()
-      .insert()
-      .into(Settings)
-      .values({
-        id: 1,
+  async findOne(userId: number) {
+    let settings = await this.settingsRepository.findOne({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+
+    if (!settings) {
+      settings = this.settingsRepository.create({
         openingBalance: 0,
         incomeSources: ['Salary', 'Bonus', 'Other'],
         expenseSources: ['Food', 'Rent', 'Transport', 'Other'],
         monthlyBudgets: {},
-      })
-      .orIgnore()
-      .execute();
+        user: { id: userId } as User,
+      });
 
-    return this.settingsRepository.findOneByOrFail({ id: 1 });
+      settings = await this.settingsRepository.save(settings);
+    }
+
+    return settings;
   }
 
-  async update(updateSettingsDto: UpdateSettingsDto) {
-    const settings = await this.findOne();
+  async update(updateSettingsDto: UpdateSettingsDto, userId: number) {
+    const settings = await this.findOne(userId);
 
     Object.assign(settings, updateSettingsDto);
 

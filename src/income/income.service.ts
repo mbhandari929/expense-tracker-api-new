@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income } from './entities/income.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class IncomeService {
@@ -12,17 +13,34 @@ export class IncomeService {
     private readonly incomeRepository: Repository<Income>,
   ) {}
 
-  create(createIncomeDto: CreateIncomeDto) {
-    const income = this.incomeRepository.create(createIncomeDto);
+  create(createIncomeDto: CreateIncomeDto, userId: number) {
+    const income = this.incomeRepository.create({
+      ...createIncomeDto,
+      user: { id: userId } as User,
+    });
+
     return this.incomeRepository.save(income);
   }
 
-  findAll() {
-    return this.incomeRepository.find();
+  findAll(userId: number) {
+    return this.incomeRepository.find({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
   }
 
-  async findOne(id: number) {
-    const income = await this.incomeRepository.findOneBy({ id });
+  async findOne(id: number, userId: number) {
+    const income = await this.incomeRepository.findOne({
+      where: {
+        id,
+        user: {
+          id: userId,
+        },
+      },
+    });
 
     if (!income) {
       throw new NotFoundException(`Income with ID ${id} not found`);
@@ -31,21 +49,17 @@ export class IncomeService {
     return income;
   }
 
-  async update(id: number, updateIncomeDto: UpdateIncomeDto) {
-    const income = await this.incomeRepository.preload({
-      id,
-      ...updateIncomeDto,
-    });
+  async update(id: number, updateIncomeDto: UpdateIncomeDto, userId: number) {
+    const income = await this.findOne(id, userId);
 
-    if (!income) {
-      throw new NotFoundException(`Income with ID ${id} not found`);
-    }
+    Object.assign(income, updateIncomeDto);
 
     return this.incomeRepository.save(income);
   }
 
-  async remove(id: number) {
-    const income = await this.findOne(id);
+  async remove(id: number, userId: number) {
+    const income = await this.findOne(id, userId);
+
     return this.incomeRepository.remove(income);
   }
 }

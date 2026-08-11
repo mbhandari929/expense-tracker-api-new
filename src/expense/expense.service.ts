@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { Expense } from './entities/expense.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -12,17 +13,34 @@ export class ExpenseService {
     private readonly expenseRepository: Repository<Expense>,
   ) {}
 
-  create(createExpenseDto: CreateExpenseDto) {
-    const expense = this.expenseRepository.create(createExpenseDto);
+  create(createExpenseDto: CreateExpenseDto, userId: number) {
+    const expense = this.expenseRepository.create({
+      ...createExpenseDto,
+      user: { id: userId } as User,
+    });
+
     return this.expenseRepository.save(expense);
   }
 
-  findAll() {
-    return this.expenseRepository.find();
+  findAll(userId: number) {
+    return this.expenseRepository.find({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
   }
 
-  async findOne(id: number) {
-    const expense = await this.expenseRepository.findOneBy({ id });
+  async findOne(id: number, userId: number) {
+    const expense = await this.expenseRepository.findOne({
+      where: {
+        id,
+        user: {
+          id: userId,
+        },
+      },
+    });
 
     if (!expense) {
       throw new NotFoundException(`Expense with ID ${id} not found`);
@@ -31,21 +49,17 @@ export class ExpenseService {
     return expense;
   }
 
-  async update(id: number, updateExpenseDto: UpdateExpenseDto) {
-    const expense = await this.expenseRepository.preload({
-      id,
-      ...updateExpenseDto,
-    });
+  async update(id: number, updateExpenseDto: UpdateExpenseDto, userId: number) {
+    const expense = await this.findOne(id, userId);
 
-    if (!expense) {
-      throw new NotFoundException(`Expense with ID ${id} not found`);
-    }
+    Object.assign(expense, updateExpenseDto);
 
     return this.expenseRepository.save(expense);
   }
 
-  async remove(id: number) {
-    const expense = await this.findOne(id);
+  async remove(id: number, userId: number) {
+    const expense = await this.findOne(id, userId);
+
     return this.expenseRepository.remove(expense);
   }
 }

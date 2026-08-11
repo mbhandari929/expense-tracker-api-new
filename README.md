@@ -4,14 +4,15 @@ A NestJS backend API for the Expense Tracker application.
 
 ## Features
 
-- Income CRUD
-- Expense CRUD
-- Settings API
-- Atomic JSON backup restore
+- User registration and login
+- JWT authentication
+- User-specific Income CRUD
+- User-specific Expense CRUD
+- User-specific Settings API
+- User-specific atomic JSON backup restore
 - Request validation
 - SQLite database with TypeORM
 - Configurable CORS
-- Backup restore security guard
 
 ## Setup
 
@@ -27,21 +28,21 @@ Create a `.env` file from `.env.example`:
 
 ```powershell
 Copy-Item .env.example .env
-
-PowerShell:
-
-```powershell
-$env:CORS_ORIGIN="http://localhost:5173"
-$env:API_KEY="your-api-key-here"
-
-The frontend `VITE_API_KEY` must use the same value as the backend `API_KEY`.
-
-npm run start:dev
 ```
+
+Configure the following values in `.env`:
+
+```env
+NODE_ENV=development
+JWT_SECRET=your-jwt-secret-here
+CORS_ORIGIN=http://localhost:5173
+```
+
+`JWT_SECRET` is used to sign and verify JWT access tokens.
 
 `CORS_ORIGIN` specifies the frontend URL allowed to access the backend.
 
-The default value is:
+The default frontend URL is:
 
 ```text
 http://localhost:5173
@@ -49,11 +50,9 @@ http://localhost:5173
 
 Multiple origins can be separated using commas:
 
-```powershell
-$env:CORS_ORIGIN="http://localhost:5173,https://your-frontend.example.com"
+```env
+CORS_ORIGIN=http://localhost:5173,https://your-frontend.example.com
 ```
-
-
 
 ## Start the Backend
 
@@ -71,6 +70,52 @@ http://localhost:3000
 
 ```bash
 npm run build
+```
+
+## Authentication
+
+### Register
+
+```text
+POST /auth/register
+```
+
+Example:
+
+```json
+{
+  "email": "test@example.com",
+  "password": "test1234"
+}
+```
+
+### Login
+
+```text
+POST /auth/login
+```
+
+Example:
+
+```json
+{
+  "email": "test@example.com",
+  "password": "test1234"
+}
+```
+
+A successful login returns a JWT access token:
+
+```json
+{
+  "access_token": "your-jwt-access-token"
+}
+```
+
+Protected API requests must include the JWT token:
+
+```text
+Authorization: Bearer <access_token>
 ```
 
 ## Income API
@@ -95,6 +140,8 @@ Example:
 
 Income amounts must be greater than `0`.
 
+Income records are available only to the authenticated user who owns them.
+
 ## Expense API
 
 ```text
@@ -117,6 +164,8 @@ Example:
 
 Expense amounts must be greater than `0`.
 
+Expense records are available only to the authenticated user who owns them.
+
 ## Settings API
 
 ```text
@@ -124,7 +173,7 @@ GET   /settings
 PATCH /settings
 ```
 
-The settings API stores:
+The Settings API stores:
 
 - Opening balance
 - Income sources
@@ -148,7 +197,7 @@ Monthly-budget keys must use the `YYYY-MM` format.
 
 Monthly-budget values must be non-negative numbers.
 
-The settings record uses ID `1`.
+Each authenticated user has their own settings.
 
 ## Backup Restore API
 
@@ -156,24 +205,25 @@ The settings record uses ID `1`.
 PUT /backup/restore
 ```
 
-
-
+The endpoint requires JWT authentication:
 
 ```text
-X-API-Key: your-api-key-here
+Authorization: Bearer <access_token>
 ```
 
-Restore replaces the existing:
+Restore replaces only the authenticated user's existing:
 
 - Income transactions
 - Expense transactions
 - Settings
 
+Other users' data is not modified.
+
 The restore runs inside one database transaction.
 
 If restoration fails, all changes are rolled back.
 
-Transaction IDs are intentionally regenerated during restore. The frontend must use the new records and IDs returned by the backend.
+Transaction IDs are intentionally regenerated during restore. The frontend uses the new records and IDs returned by the backend.
 
 ## CORS
 
@@ -186,6 +236,13 @@ PATCH
 PUT
 DELETE
 OPTIONS
+```
+
+Allowed request headers:
+
+```text
+Content-Type
+Authorization
 ```
 
 ## Database
