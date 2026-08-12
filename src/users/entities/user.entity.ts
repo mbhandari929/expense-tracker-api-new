@@ -10,4 +10,16 @@ export class User {
 
   @Column()
   password!: string;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  resetPasswordTokenHash!: string | null;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  resetPasswordExpiresAt!: Date | null;
 }
