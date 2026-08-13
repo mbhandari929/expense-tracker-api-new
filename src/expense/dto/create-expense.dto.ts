@@ -1,20 +1,3 @@
-import {
-  IsDateString,
-  IsNotEmpty,
-  IsNumber,
-  IsPositive,
-  IsString,
-} from 'class-validator';
+import { CreateTransactionDto } from '../../common/dto/create-transaction.dto';
 
-export class CreateExpenseDto {
-  @IsString()
-  @IsNotEmpty()
-  text!: string;
-
-  @IsNumber()
-  @IsPositive()
-  amount!: number;
-
-  @IsDateString()
-  date!: string;
-}
+export class CreateExpenseDto extends CreateTransactionDto {}

@@ -1,38 +1,18 @@
 import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsDateString,
-  IsNotEmpty,
-  IsNumber,
-  IsPositive,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
+import { IsArray, IsNumber, IsString, ValidateNested } from 'class-validator';
+import { CreateTransactionDto } from '../../common/dto/create-transaction.dto';
 import { IsMonthlyBudgets } from '../../common/validators/is-monthly-budgets.validator';
-
-class RestoreTransactionDto {
-  @IsString()
-  @IsNotEmpty()
-  text!: string;
-
-  @IsNumber()
-  @IsPositive()
-  amount!: number;
-
-  @IsDateString()
-  date!: string;
-}
 
 export class RestoreBackupDto {
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => RestoreTransactionDto)
-  incomes!: RestoreTransactionDto[];
+  @Type(() => CreateTransactionDto)
+  incomes!: CreateTransactionDto[];
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => RestoreTransactionDto)
-  expenses!: RestoreTransactionDto[];
+  @Type(() => CreateTransactionDto)
+  expenses!: CreateTransactionDto[];
 
   @IsNumber()
   openingBalance!: number;

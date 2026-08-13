@@ -24,7 +24,7 @@ export class AuthService {
   ) {}
 
   async register(email: string, password: string) {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = this.normalizeEmail(email);
 
     const existingUser = await this.usersService.findByEmail(normalizedEmail);
 
@@ -48,7 +48,7 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = this.normalizeEmail(email);
 
     const user = await this.usersService.findByEmail(normalizedEmail);
 
@@ -94,13 +94,7 @@ export class AuthService {
       throw new UnauthorizedException('Current password is incorrect');
     }
 
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
-
-    if (isSamePassword) {
-      throw new BadRequestException(
-        'New password must be different from current password',
-      );
-    }
+    await this.validateNewPassword(newPassword, user.password);
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
@@ -112,7 +106,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = this.normalizeEmail(email);
 
     const user = await this.usersService.findByEmail(normalizedEmail);
 
@@ -157,13 +151,7 @@ export class AuthService {
       );
     }
 
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
-
-    if (isSamePassword) {
-      throw new BadRequestException(
-        'New password must be different from current password',
-      );
-    }
+    await this.validateNewPassword(newPassword, user.password);
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -174,5 +162,25 @@ export class AuthService {
     return {
       message: 'Password reset successfully',
     };
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private async validateNewPassword(
+    newPassword: string,
+    currentPasswordHash: string,
+  ): Promise<void> {
+    const isSamePassword = await bcrypt.compare(
+      newPassword,
+      currentPasswordHash,
+    );
+
+    if (isSamePassword) {
+      throw new BadRequestException(
+        'New password must be different from current password',
+      );
+    }
   }
 }

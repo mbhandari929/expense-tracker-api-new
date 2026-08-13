@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import type { EntityManager, EntityTarget, ObjectLiteral } from 'typeorm';
+import type { CreateTransactionDto } from '../common/dto/create-transaction.dto';
 import { Expense } from '../expense/entities/expense.entity';
 import { Income } from '../income/entities/income.entity';
 import { Settings } from '../settings/entities/settings.entity';
-import { User } from '../users/entities/user.entity';
 import { RestoreBackupDto } from './dto/restore-backup.dto';
 
 @Injectable()
@@ -12,45 +13,18 @@ export class BackupService {
 
   async restore(restoreBackupDto: RestoreBackupDto, userId: number) {
     return this.dataSource.transaction(async (manager) => {
-      await manager
-        .getRepository(Income)
-        .createQueryBuilder()
-        .delete()
-        .where('userId = :userId', { userId })
-        .execute();
-
-      await manager
-        .getRepository(Expense)
-        .createQueryBuilder()
-        .delete()
-        .where('userId = :userId', { userId })
-        .execute();
-
-      await manager
-        .getRepository(Settings)
-        .createQueryBuilder()
-        .delete()
-        .where('userId = :userId', { userId })
-        .execute();
+      await this.deleteUserData(manager, Income, userId);
+      await this.deleteUserData(manager, Expense, userId);
+      await this.deleteUserData(manager, Settings, userId);
 
       const incomes = manager.create(
         Income,
-        restoreBackupDto.incomes.map((item) => ({
-          text: item.text,
-          amount: item.amount,
-          date: item.date,
-          user: { id: userId } as User,
-        })),
+        this.mapTransactionsForUser(restoreBackupDto.incomes, userId),
       );
 
       const expenses = manager.create(
         Expense,
-        restoreBackupDto.expenses.map((item) => ({
-          text: item.text,
-          amount: item.amount,
-          date: item.date,
-          user: { id: userId } as User,
-        })),
+        this.mapTransactionsForUser(restoreBackupDto.expenses, userId),
       );
 
       const settings = manager.create(Settings, {
@@ -58,7 +32,7 @@ export class BackupService {
         incomeSources: restoreBackupDto.incomeSources,
         expenseSources: restoreBackupDto.expenseSources,
         monthlyBudgets: restoreBackupDto.monthlyBudgets,
-        user: { id: userId } as User,
+        user: { id: userId },
       });
 
       const savedIncomes = await manager.save(Income, incomes);
@@ -74,5 +48,30 @@ export class BackupService {
         settings: savedSettings,
       };
     });
+  }
+
+  private async deleteUserData<T extends ObjectLiteral>(
+    manager: EntityManager,
+    entity: EntityTarget<T>,
+    userId: number,
+  ): Promise<void> {
+    await manager
+      .getRepository(entity)
+      .createQueryBuilder()
+      .delete()
+      .where('userId = :userId', { userId })
+      .execute();
+  }
+
+  private mapTransactionsForUser(
+    transactions: CreateTransactionDto[],
+    userId: number,
+  ) {
+    return transactions.map(({ text, amount, date }) => ({
+      text,
+      amount,
+      date,
+      user: { id: userId },
+    }));
   }
 }
