@@ -1,29 +1,23 @@
-import { Body, Controller, Get, Patch, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { SettingsService } from './settings.service';
-
-type AuthenticatedRequest = Request & {
-  user: {
-    sub: number;
-    email: string;
-  };
-};
 
 @Controller('settings')
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 
   @Get()
-  findOne(@Req() request: AuthenticatedRequest) {
-    return this.settingsService.findOne(request.user.sub);
+  findOne(@CurrentUser() user: AuthenticatedRequest['user']) {
+    return this.settingsService.findOne(user.sub);
   }
 
   @Patch()
   update(
     @Body() updateSettingsDto: UpdateSettingsDto,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.settingsService.update(updateSettingsDto, request.user.sub);
+    return this.settingsService.update(updateSettingsDto, user.sub);
   }
 }

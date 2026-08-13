@@ -1,19 +1,12 @@
-import { Body, Controller, Patch, Post, Req } from '@nestjs/common';
-import { Request } from 'express';
-
+import { Body, Controller, Patch, Post } from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-
-type AuthenticatedRequest = Request & {
-  user: {
-    sub: number;
-    email: string;
-  };
-};
 
 @Controller('auth')
 export class AuthController {
@@ -33,11 +26,11 @@ export class AuthController {
 
   @Patch('change-password')
   changePassword(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
     @Body() body: ChangePasswordDto,
   ) {
     return this.authService.changePassword(
-      request.user.sub,
+      user.sub,
       body.currentPassword,
       body.newPassword,
     );

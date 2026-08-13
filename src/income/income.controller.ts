@@ -7,19 +7,12 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Req,
 } from '@nestjs/common';
-import { Request } from 'express';
-import { IncomeService } from './income.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
-
-type AuthenticatedRequest = Request & {
-  user: {
-    sub: number;
-    email: string;
-  };
-};
+import { IncomeService } from './income.service';
 
 @Controller('income')
 export class IncomeController {
@@ -28,38 +21,38 @@ export class IncomeController {
   @Post()
   create(
     @Body() createIncomeDto: CreateIncomeDto,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.incomeService.create(createIncomeDto, request.user.sub);
+    return this.incomeService.create(createIncomeDto, user.sub);
   }
 
   @Get()
-  findAll(@Req() request: AuthenticatedRequest) {
-    return this.incomeService.findAll(request.user.sub);
+  findAll(@CurrentUser() user: AuthenticatedRequest['user']) {
+    return this.incomeService.findAll(user.sub);
   }
 
   @Get(':id')
   findOne(
     @Param('id', ParseIntPipe) id: number,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.incomeService.findOne(id, request.user.sub);
+    return this.incomeService.findOne(id, user.sub);
   }
 
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateIncomeDto: UpdateIncomeDto,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.incomeService.update(id, updateIncomeDto, request.user.sub);
+    return this.incomeService.update(id, updateIncomeDto, user.sub);
   }
 
   @Delete(':id')
   remove(
     @Param('id', ParseIntPipe) id: number,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.incomeService.remove(id, request.user.sub);
+    return this.incomeService.remove(id, user.sub);
   }
 }

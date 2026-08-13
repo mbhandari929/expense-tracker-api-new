@@ -7,19 +7,12 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Req,
 } from '@nestjs/common';
-import { Request } from 'express';
-import { ExpenseService } from './expense.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
-
-type AuthenticatedRequest = Request & {
-  user: {
-    sub: number;
-    email: string;
-  };
-};
+import { ExpenseService } from './expense.service';
 
 @Controller('expense')
 export class ExpenseController {
@@ -28,38 +21,38 @@ export class ExpenseController {
   @Post()
   create(
     @Body() createExpenseDto: CreateExpenseDto,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.expenseService.create(createExpenseDto, request.user.sub);
+    return this.expenseService.create(createExpenseDto, user.sub);
   }
 
   @Get()
-  findAll(@Req() request: AuthenticatedRequest) {
-    return this.expenseService.findAll(request.user.sub);
+  findAll(@CurrentUser() user: AuthenticatedRequest['user']) {
+    return this.expenseService.findAll(user.sub);
   }
 
   @Get(':id')
   findOne(
     @Param('id', ParseIntPipe) id: number,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.expenseService.findOne(id, request.user.sub);
+    return this.expenseService.findOne(id, user.sub);
   }
 
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateExpenseDto: UpdateExpenseDto,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.expenseService.update(id, updateExpenseDto, request.user.sub);
+    return this.expenseService.update(id, updateExpenseDto, user.sub);
   }
 
   @Delete(':id')
   remove(
     @Param('id', ParseIntPipe) id: number,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.expenseService.remove(id, request.user.sub);
+    return this.expenseService.remove(id, user.sub);
   }
 }

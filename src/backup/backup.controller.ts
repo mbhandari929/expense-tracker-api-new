@@ -1,14 +1,8 @@
-import { Body, Controller, Put, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Body, Controller, Put } from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
 import { BackupService } from './backup.service';
 import { RestoreBackupDto } from './dto/restore-backup.dto';
-
-type AuthenticatedRequest = Request & {
-  user: {
-    sub: number;
-    email: string;
-  };
-};
 
 @Controller('backup')
 export class BackupController {
@@ -17,8 +11,8 @@ export class BackupController {
   @Put('restore')
   restore(
     @Body() restoreBackupDto: RestoreBackupDto,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedRequest['user'],
   ) {
-    return this.backupService.restore(restoreBackupDto, request.user.sub);
+    return this.backupService.restore(restoreBackupDto, user.sub);
   }
 }

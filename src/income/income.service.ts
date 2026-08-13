@@ -1,65 +1,42 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UserScopedRepository } from '../common/repositories/user-scoped.repository';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income } from './entities/income.entity';
-import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class IncomeService {
+  private readonly userScopedRepository: UserScopedRepository<Income>;
+
   constructor(
     @InjectRepository(Income)
-    private readonly incomeRepository: Repository<Income>,
-  ) {}
+    incomeRepository: Repository<Income>,
+  ) {
+    this.userScopedRepository = new UserScopedRepository(
+      incomeRepository,
+      'Income',
+    );
+  }
 
   create(createIncomeDto: CreateIncomeDto, userId: number) {
-    const income = this.incomeRepository.create({
-      ...createIncomeDto,
-      user: { id: userId } as User,
-    });
-
-    return this.incomeRepository.save(income);
+    return this.userScopedRepository.create(createIncomeDto, userId);
   }
 
   findAll(userId: number) {
-    return this.incomeRepository.find({
-      where: {
-        user: {
-          id: userId,
-        },
-      },
-    });
+    return this.userScopedRepository.findAll(userId);
   }
 
-  async findOne(id: number, userId: number) {
-    const income = await this.incomeRepository.findOne({
-      where: {
-        id,
-        user: {
-          id: userId,
-        },
-      },
-    });
-
-    if (!income) {
-      throw new NotFoundException(`Income with ID ${id} not found`);
-    }
-
-    return income;
+  findOne(id: number, userId: number) {
+    return this.userScopedRepository.findOne(id, userId);
   }
 
-  async update(id: number, updateIncomeDto: UpdateIncomeDto, userId: number) {
-    const income = await this.findOne(id, userId);
-
-    Object.assign(income, updateIncomeDto);
-
-    return this.incomeRepository.save(income);
+  update(id: number, updateIncomeDto: UpdateIncomeDto, userId: number) {
+    return this.userScopedRepository.update(id, updateIncomeDto, userId);
   }
 
-  async remove(id: number, userId: number) {
-    const income = await this.findOne(id, userId);
-
-    return this.incomeRepository.remove(income);
+  remove(id: number, userId: number) {
+    return this.userScopedRepository.remove(id, userId);
   }
 }

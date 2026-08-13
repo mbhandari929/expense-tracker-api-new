@@ -1,65 +1,42 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UserScopedRepository } from '../common/repositories/user-scoped.repository';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { Expense } from './entities/expense.entity';
-import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ExpenseService {
+  private readonly userScopedRepository: UserScopedRepository<Expense>;
+
   constructor(
     @InjectRepository(Expense)
-    private readonly expenseRepository: Repository<Expense>,
-  ) {}
+    expenseRepository: Repository<Expense>,
+  ) {
+    this.userScopedRepository = new UserScopedRepository(
+      expenseRepository,
+      'Expense',
+    );
+  }
 
   create(createExpenseDto: CreateExpenseDto, userId: number) {
-    const expense = this.expenseRepository.create({
-      ...createExpenseDto,
-      user: { id: userId } as User,
-    });
-
-    return this.expenseRepository.save(expense);
+    return this.userScopedRepository.create(createExpenseDto, userId);
   }
 
   findAll(userId: number) {
-    return this.expenseRepository.find({
-      where: {
-        user: {
-          id: userId,
-        },
-      },
-    });
+    return this.userScopedRepository.findAll(userId);
   }
 
-  async findOne(id: number, userId: number) {
-    const expense = await this.expenseRepository.findOne({
-      where: {
-        id,
-        user: {
-          id: userId,
-        },
-      },
-    });
-
-    if (!expense) {
-      throw new NotFoundException(`Expense with ID ${id} not found`);
-    }
-
-    return expense;
+  findOne(id: number, userId: number) {
+    return this.userScopedRepository.findOne(id, userId);
   }
 
-  async update(id: number, updateExpenseDto: UpdateExpenseDto, userId: number) {
-    const expense = await this.findOne(id, userId);
-
-    Object.assign(expense, updateExpenseDto);
-
-    return this.expenseRepository.save(expense);
+  update(id: number, updateExpenseDto: UpdateExpenseDto, userId: number) {
+    return this.userScopedRepository.update(id, updateExpenseDto, userId);
   }
 
-  async remove(id: number, userId: number) {
-    const expense = await this.findOne(id, userId);
-
-    return this.expenseRepository.remove(expense);
+  remove(id: number, userId: number) {
+    return this.userScopedRepository.remove(id, userId);
   }
 }
