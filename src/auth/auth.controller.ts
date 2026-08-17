@@ -1,4 +1,11 @@
-import { Body, Controller, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { AuthenticatedRequest } from '../common/types/authenticated-request';
@@ -10,23 +17,48 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+  ) {}
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('register')
-  register(@Body() body: AuthCredentialsDto) {
-    return this.authService.register(body.email, body.password);
+  register(
+    @Body() body: AuthCredentialsDto,
+  ) {
+    return this.authService.register(
+      body.email,
+      body.password,
+    );
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('login')
-  login(@Body() body: AuthCredentialsDto) {
-    return this.authService.login(body.email, body.password);
+  login(
+    @Body() body: AuthCredentialsDto,
+  ) {
+    return this.authService.login(
+      body.email,
+      body.password,
+    );
   }
 
   @Patch('change-password')
   changePassword(
-    @CurrentUser() user: AuthenticatedRequest['user'],
+    @CurrentUser()
+    user: AuthenticatedRequest['user'],
     @Body() body: ChangePasswordDto,
   ) {
     return this.authService.changePassword(
@@ -37,14 +69,35 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 3,
+      ttl: 60_000,
+    },
+  })
   @Post('forgot-password')
-  forgotPassword(@Body() body: ForgotPasswordDto) {
-    return this.authService.forgotPassword(body.email);
+  forgotPassword(
+    @Body() body: ForgotPasswordDto,
+  ) {
+    return this.authService.forgotPassword(
+      body.email,
+    );
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('reset-password')
-  resetPassword(@Body() body: ResetPasswordDto) {
-    return this.authService.resetPassword(body.resetToken, body.newPassword);
+  resetPassword(
+    @Body() body: ResetPasswordDto,
+  ) {
+    return this.authService.resetPassword(
+      body.resetToken,
+      body.newPassword,
+    );
   }
 }

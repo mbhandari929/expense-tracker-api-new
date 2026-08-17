@@ -1,47 +1,111 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
-  constructor(private readonly configService: ConfigService) {}
+  private readonly logger = new Logger(
+    MailService.name,
+  );
 
-  async sendPasswordResetEmail(email: string, resetToken: string) {
-    const host = this.configService.get<string>('SMTP_HOST');
+  constructor(
+    private readonly configService: ConfigService,
+  ) {}
 
-    const port = Number(this.configService.get<string>('SMTP_PORT'));
+  async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+  ): Promise<void> {
+    const host =
+      this.configService.get<string>(
+        'SMTP_HOST',
+      );
 
-    const user = this.configService.get<string>('SMTP_USER');
+    const port = Number(
+      this.configService.get<string>(
+        'SMTP_PORT',
+      ),
+    );
 
-    const password = this.configService.get<string>('SMTP_PASS');
+    const user =
+      this.configService.get<string>(
+        'SMTP_USER',
+      );
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const password =
+      this.configService.get<string>(
+        'SMTP_PASS',
+      );
 
-    if (!host || !port || !user || !password || !frontendUrl) {
-      throw new ServiceUnavailableException(
-        'Password reset email service is not configured.',
+    const frontendUrl =
+      this.configService.get<string>(
+        'FRONTEND_URL',
+      );
+
+    if (
+      !host ||
+      !Number.isInteger(port) ||
+      port <= 0 ||
+      port > 65535 ||
+      !user ||
+      !password ||
+      !frontendUrl
+    ) {
+      this.logger.error(
+        'Password reset email service is not configured correctly.',
+      );
+
+      throw new Error(
+        'Password reset email service is unavailable.',
       );
     }
 
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: {
-        user,
-        pass: password,
-      },
-    });
+    let resetUrl: URL;
 
-    const resetUrl = new URL('/reset-password', frontendUrl);
+    try {
+      resetUrl = new URL(
+        '/reset-password',
+        frontendUrl,
+      );
 
-    resetUrl.searchParams.set('token', resetToken);
+      resetUrl.searchParams.set(
+        'token',
+        resetToken,
+      );
+    } catch (error) {
+      this.logger.error(
+        'FRONTEND_URL is invalid.',
+        error instanceof Error
+          ? error.stack
+          : String(error),
+      );
 
-    await transporter.sendMail({
-      from: `Expense Tracker <${user}>`,
-      to: email,
-      subject: 'Reset your Expense Tracker password',
-      text: `
+      throw new Error(
+        'Password reset email service is unavailable.',
+      );
+    }
+
+    const transporter =
+      nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: {
+          user,
+          pass: password,
+        },
+      });
+
+    try {
+      await transporter.sendMail({
+        from: `Expense Tracker <${user}>`,
+        to: email,
+        subject:
+          'Reset your Expense Tracker password',
+        text: `
 You requested a password reset.
 
 Reset your password here:
@@ -50,7 +114,19 @@ ${resetUrl.toString()}
 This link expires in 15 minutes.
 
 If you did not request this password reset, you can ignore this email.
-      `.trim(),
-    });
+        `.trim(),
+      });
+    } catch (error) {
+      this.logger.error(
+        'Password reset email delivery failed.',
+        error instanceof Error
+          ? error.stack
+          : String(error),
+      );
+
+      throw new Error(
+        'Password reset email delivery failed.',
+      );
+    }
   }
 }

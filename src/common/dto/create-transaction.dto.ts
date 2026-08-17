@@ -1,7 +1,7 @@
 import {
   IsDateString,
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsPositive,
   IsString,
 } from 'class-validator';
@@ -11,7 +11,7 @@ export class CreateTransactionDto {
   @IsNotEmpty()
   text!: string;
 
-  @IsNumber()
+  @IsInt()
   @IsPositive()
   amount!: number;
 

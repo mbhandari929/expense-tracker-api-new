@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { User } from './entities/user.entity';
 
@@ -17,10 +17,26 @@ export class UsersService {
     });
   }
 
+  findByEmailWithPassword(email: string) {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
+  }
+
   findById(id: number) {
     return this.userRepository.findOne({
       where: { id },
     });
+  }
+
+  findByIdWithPassword(id: number) {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.id = :id', { id })
+      .getOne();
   }
 
   create(email: string, password: string) {
@@ -32,10 +48,25 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
-  async updatePassword(userId: number, hashedPassword: string) {
-    await this.userRepository.update(userId, {
-      password: hashedPassword,
-    });
+  async deleteById(userId: number) {
+    await this.userRepository.delete(userId);
+  }
+
+  async updatePasswordAndInvalidateSessions(
+    userId: number,
+    hashedPassword: string,
+  ) {
+    await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({
+        password: hashedPassword,
+        resetPasswordTokenHash: null,
+        resetPasswordExpiresAt: null,
+        tokenVersion: () => 'tokenVersion + 1',
+      })
+      .where('id = :userId', { userId })
+      .execute();
   }
 
   async savePasswordResetToken(
@@ -49,13 +80,30 @@ export class UsersService {
     });
   }
 
-  findByValidResetToken(tokenHash: string) {
-    return this.userRepository.findOne({
-      where: {
-        resetPasswordTokenHash: tokenHash,
-        resetPasswordExpiresAt: MoreThan(new Date()),
-      },
+  async restorePasswordResetToken(
+    userId: number,
+    tokenHash: string | null,
+    expiresAt: Date | null,
+  ) {
+    await this.userRepository.update(userId, {
+      resetPasswordTokenHash: tokenHash,
+      resetPasswordExpiresAt: expiresAt,
     });
+  }
+
+  findByValidResetToken(tokenHash: string) {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where(
+        'user.resetPasswordTokenHash = :tokenHash',
+        { tokenHash },
+      )
+      .andWhere(
+        'user.resetPasswordExpiresAt > :now',
+        { now: new Date() },
+      )
+      .getOne();
   }
 
   async clearPasswordResetToken(userId: number) {
