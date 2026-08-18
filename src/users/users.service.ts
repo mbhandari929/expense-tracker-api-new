@@ -51,7 +51,8 @@ export class UsersService {
   async deleteById(userId: number) {
     await this.userRepository.delete(userId);
   }
-
+  // Updates the password, invalidates existing JWT sessions,
+  // and clears any active password reset token.
   async updatePasswordAndInvalidateSessions(
     userId: number,
     hashedPassword: string,
@@ -95,21 +96,8 @@ export class UsersService {
     return this.userRepository
       .createQueryBuilder('user')
       .addSelect('user.password')
-      .where(
-        'user.resetPasswordTokenHash = :tokenHash',
-        { tokenHash },
-      )
-      .andWhere(
-        'user.resetPasswordExpiresAt > :now',
-        { now: new Date() },
-      )
+      .where('user.resetPasswordTokenHash = :tokenHash', { tokenHash })
+      .andWhere('user.resetPasswordExpiresAt > :now', { now: new Date() })
       .getOne();
-  }
-
-  async clearPasswordResetToken(userId: number) {
-    await this.userRepository.update(userId, {
-      resetPasswordTokenHash: null,
-      resetPasswordExpiresAt: null,
-    });
   }
 }

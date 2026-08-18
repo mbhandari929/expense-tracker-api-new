@@ -22,6 +22,16 @@ Install dependencies:
 npm install
 ```
 
+Create and configure the `.env` file as described below.
+
+Run database migrations before starting the backend:
+
+```bash
+npm run migration:run
+```
+
+Because TypeORM `synchronize` is disabled, database schema changes must be applied through migrations.
+
 ## Environment Variables
 
 Create a `.env` file from `.env.example`:
@@ -117,6 +127,27 @@ Protected API requests must include the JWT token:
 ```text
 Authorization: Bearer <access_token>
 ```
+
+## Rate Limiting
+
+The API uses request rate limiting.
+
+The default limit for API endpoints is:
+
+```text
+60 requests per minute
+```
+
+Authentication endpoints use stricter limits:
+
+```text
+POST /auth/register         5 requests per minute
+POST /auth/login            5 requests per minute
+POST /auth/forgot-password  3 requests per minute
+POST /auth/reset-password   5 requests per minute
+```
+
+These limits help reduce abuse and repeated authentication attempts.
 
 ## Income API
 
@@ -223,7 +254,43 @@ The restore runs inside one database transaction.
 
 If restoration fails, all changes are rolled back.
 
-Transaction IDs are intentionally regenerated during restore. The frontend uses the new records and IDs returned by the backend.
+Transaction IDs are intentionally regenerated during restore.
+
+The frontend must use the records and IDs returned by the backend after the restore instead of relying on IDs from the backup JSON.
+
+Example response:
+
+```json
+{
+  "message": "Backup restored successfully",
+  "incomes": [
+    {
+      "id": 1,
+      "text": "Salary",
+      "amount": 50000,
+      "date": "2026-08-04"
+    }
+  ],
+  "expenses": [
+    {
+      "id": 1,
+      "text": "Food",
+      "amount": 1000,
+      "date": "2026-08-04"
+    }
+  ],
+  "settings": {
+    "openingBalance": 100000,
+    "incomeSources": ["Salary", "Bonus", "Other"],
+    "expenseSources": ["Food", "Rent", "Transport", "Other"],
+    "monthlyBudgets": {
+      "2026-08": 200000
+    }
+  }
+}
+```
+
+The IDs in this example are newly generated database IDs and are not guaranteed to match IDs contained in the imported backup.
 
 ## CORS
 
@@ -251,6 +318,14 @@ This project uses SQLite with TypeORM.
 
 ```text
 expense.db
+```
+
+Database schema synchronization is disabled.
+
+After pulling schema changes or new migrations, run:
+
+```bash
+npm run migration:run
 ```
 
 ## Frontend Repository

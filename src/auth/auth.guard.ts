@@ -64,6 +64,9 @@ export class AuthGuard implements CanActivate {
       );
     }
 
+    // A database lookup is intentional here.
+    // tokenVersion is compared with the current user record so that
+    // access tokens issued before a password change are invalidated immediately.
     const user =
       await this.usersService.findById(
         payload.sub,

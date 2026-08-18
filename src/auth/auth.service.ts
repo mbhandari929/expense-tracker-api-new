@@ -8,16 +8,16 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
-
-import { MailService } from '../mail/mail.service';
 import { SettingsService } from '../settings/settings.service';
+import { MailService } from '../mail/mail.service';
+import { DataSource } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
-
 const RESET_TOKEN_EXPIRY_MINUTES = 15;
-
 const PASSWORD_RESET_RESPONSE =
   'If an account with that email exists, a password reset link has been sent.';
-
+const DUMMY_PASSWORD_HASH =
+  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -25,73 +25,55 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly settingsService: SettingsService,
     private readonly mailService: MailService,
+    private readonly dataSource: DataSource,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async register(email: string, password: string) {
     const normalizedEmail = this.normalizeEmail(email);
-
-    const existingUser =
-      await this.usersService.findByEmail(normalizedEmail);
-
-    if (existingUser) {
-      throw new ConflictException('Email already exists');
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await this.usersService.create(
-      normalizedEmail,
-      hashedPassword,
-    );
+    return this.dataSource.transaction(async (manager) => {
+      const userRepository = manager.getRepository(User);
+      const existingUser = await userRepository.findOne({
+        where: { email: normalizedEmail },
+      });
 
-    try {
-      await this.settingsService.createDefault(user.id);
-    } catch (error) {
-      try {
-        await this.usersService.deleteById(user.id);
-      } catch (rollbackError) {
-        this.logger.error(
-          `Failed to roll back user ${user.id} after settings creation failed`,
-          rollbackError instanceof Error
-            ? rollbackError.stack
-            : String(rollbackError),
-        );
+      if (existingUser) {
+        throw new ConflictException('Email already exists');
       }
 
-      throw error;
-    }
+      const user = userRepository.create({
+        email: normalizedEmail,
+        password: hashedPassword,
+      });
 
-    return {
-      id: user.id,
-      email: user.email,
-    };
+      await userRepository.save(user);
+
+      await this.settingsService.createDefaultInTransaction(manager, user);
+      return {
+        id: user.id,
+        email: user.email,
+      };
+    });
   }
 
   async login(email: string, password: string) {
     const normalizedEmail = this.normalizeEmail(email);
 
     const user =
-      await this.usersService.findByEmailWithPassword(
-        normalizedEmail,
-      );
+      await this.usersService.findByEmailWithPassword(normalizedEmail);
 
     if (!user) {
-      throw new UnauthorizedException(
-        'Invalid email or password',
-      );
-    }
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
 
-    const passwordMatches = await bcrypt.compare(
-      password,
-      user.password,
-    );
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    const passwordMatches = await bcrypt.compare(password, user.password);
 
     if (!passwordMatches) {
-      throw new UnauthorizedException(
-        'Invalid email or password',
-      );
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const payload = {
@@ -100,8 +82,7 @@ export class AuthService {
       tokenVersion: user.tokenVersion,
     };
 
-    const accessToken =
-      await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync(payload);
 
     return {
       access_token: accessToken,
@@ -113,8 +94,7 @@ export class AuthService {
     currentPassword: string,
     newPassword: string,
   ) {
-    const user =
-      await this.usersService.findByIdWithPassword(userId);
+    const user = await this.usersService.findByIdWithPassword(userId);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -126,20 +106,12 @@ export class AuthService {
     );
 
     if (!currentPasswordMatches) {
-      throw new UnauthorizedException(
-        'Current password is incorrect',
-      );
+      throw new UnauthorizedException('Current password is incorrect');
     }
 
-    await this.validateNewPassword(
-      newPassword,
-      user.password,
-    );
+    await this.validateNewPassword(newPassword, user.password);
 
-    const hashedNewPassword = await bcrypt.hash(
-      newPassword,
-      10,
-    );
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
     await this.usersService.updatePasswordAndInvalidateSessions(
       user.id,
@@ -154,8 +126,7 @@ export class AuthService {
   async forgotPassword(email: string) {
     const normalizedEmail = this.normalizeEmail(email);
 
-    const user =
-      await this.usersService.findByEmail(normalizedEmail);
+    const user = await this.usersService.findByEmail(normalizedEmail);
 
     if (!user) {
       return {
@@ -163,11 +134,9 @@ export class AuthService {
       };
     }
 
-    const previousTokenHash =
-      user.resetPasswordTokenHash;
+    const previousTokenHash = user.resetPasswordTokenHash;
 
-    const previousExpiresAt =
-      user.resetPasswordExpiresAt;
+    const previousExpiresAt = user.resetPasswordExpiresAt;
 
     const resetToken = randomBytes(32).toString('hex');
 
@@ -176,8 +145,7 @@ export class AuthService {
       .digest('hex');
 
     const expiresAt = new Date(
-      Date.now() +
-        RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000,
+      Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000,
     );
 
     try {
@@ -187,10 +155,7 @@ export class AuthService {
         expiresAt,
       );
 
-      await this.mailService.sendPasswordResetEmail(
-        user.email,
-        resetToken,
-      );
+      await this.mailService.sendPasswordResetEmail(user.email, resetToken);
     } catch (error) {
       try {
         await this.usersService.restorePasswordResetToken(
@@ -209,9 +174,7 @@ export class AuthService {
 
       this.logger.error(
         `Password reset email could not be sent for user ${user.id}`,
-        error instanceof Error
-          ? error.stack
-          : String(error),
+        error instanceof Error ? error.stack : String(error),
       );
     }
 
@@ -220,18 +183,12 @@ export class AuthService {
     };
   }
 
-  async resetPassword(
-    resetToken: string,
-    newPassword: string,
-  ) {
+  async resetPassword(resetToken: string, newPassword: string) {
     const resetTokenHash = createHash('sha256')
       .update(resetToken)
       .digest('hex');
 
-    const user =
-      await this.usersService.findByValidResetToken(
-        resetTokenHash,
-      );
+    const user = await this.usersService.findByValidResetToken(resetTokenHash);
 
     if (!user) {
       throw new BadRequestException(
@@ -239,15 +196,9 @@ export class AuthService {
       );
     }
 
-    await this.validateNewPassword(
-      newPassword,
-      user.password,
-    );
+    await this.validateNewPassword(newPassword, user.password);
 
-    const hashedPassword = await bcrypt.hash(
-      newPassword,
-      10,
-    );
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await this.usersService.updatePasswordAndInvalidateSessions(
       user.id,

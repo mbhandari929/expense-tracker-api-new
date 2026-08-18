@@ -10,7 +10,7 @@ export default new DataSource({
   type: 'better-sqlite3',
   database: process.env.DATABASE_PATH ?? 'expense.db',
   entities: [Income, Expense, Settings, User],
-  migrations: ['dist/src/database/migrations/*.js'],
+  migrations: ['dist/database/migrations/*.js'],
   migrationsTableName: 'migrations',
   synchronize: false,
 });

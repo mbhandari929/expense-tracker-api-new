@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
+
 import { User } from '../users/entities/user.entity';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { Settings } from './entities/settings.entity';
@@ -13,15 +14,15 @@ export class SettingsService {
   ) {}
 
   async createDefault(userId: number) {
-    const settings = this.settingsRepository.create({
-      openingBalance: 0,
-      incomeSources: ['Salary', 'Bonus', 'Other'],
-      expenseSources: ['Food', 'Rent', 'Transport', 'Other'],
-      monthlyBudgets: {},
-      user: { id: userId } as User,
-    });
+    return this.createDefaultWithRepository(this.settingsRepository, {
+      id: userId,
+    } as User);
+  }
 
-    return this.settingsRepository.save(settings);
+  async createDefaultInTransaction(manager: EntityManager, user: User) {
+    const settingsRepository = manager.getRepository(Settings);
+
+    return this.createDefaultWithRepository(settingsRepository, user);
   }
 
   async findOne(userId: number) {
@@ -34,7 +35,7 @@ export class SettingsService {
     });
 
     if (!settings) {
-      throw new NotFoundException('Settings not found');
+      return this.createDefault(userId);
     }
 
     return settings;
@@ -46,5 +47,20 @@ export class SettingsService {
     Object.assign(settings, updateSettingsDto);
 
     return this.settingsRepository.save(settings);
+  }
+
+  private createDefaultWithRepository(
+    repository: Repository<Settings>,
+    user: User,
+  ) {
+    const settings = repository.create({
+      openingBalance: 0,
+      incomeSources: ['Salary', 'Bonus', 'Other'],
+      expenseSources: ['Food', 'Rent', 'Transport', 'Other'],
+      monthlyBudgets: {},
+      user,
+    });
+
+    return repository.save(settings);
   }
 }
