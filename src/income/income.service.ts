@@ -1,35 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UserScopedRepository } from '../common/repositories/user-scoped.repository';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { UpdateIncomeDto } from './dto/update-income.dto';
 import { Income } from './entities/income.entity';
 
 @Injectable()
 export class IncomeService {
+  private readonly userScopedRepository: UserScopedRepository<Income>;
+
   constructor(
     @InjectRepository(Income)
-    private readonly incomeRepository: Repository<Income>,
-  ) {}
-
-  create(createIncomeDto: CreateIncomeDto) {
-    const income = this.incomeRepository.create(createIncomeDto);
-    return this.incomeRepository.save(income);
+    incomeRepository: Repository<Income>,
+  ) {
+    this.userScopedRepository = new UserScopedRepository(
+      incomeRepository,
+      'Income',
+    );
   }
 
-  findAll() {
-    return this.incomeRepository.find();
+  create(createIncomeDto: CreateIncomeDto, userId: number) {
+    return this.userScopedRepository.create(createIncomeDto, userId);
   }
 
-  findOne(id: number) {
-    return this.incomeRepository.findOneBy({ id });
+  findAll(userId: number) {
+    return this.userScopedRepository.findAll(userId);
   }
 
-  update(id: number, updateIncomeDto: UpdateIncomeDto) {
-    return this.incomeRepository.update(id, updateIncomeDto);
+  findOne(id: number, userId: number) {
+    return this.userScopedRepository.findOne(id, userId);
   }
 
-  remove(id: number) {
-    return this.incomeRepository.delete(id);
+  update(id: number, updateIncomeDto: UpdateIncomeDto, userId: number) {
+    return this.userScopedRepository.update(id, updateIncomeDto, userId);
+  }
+
+  remove(id: number, userId: number) {
+    return this.userScopedRepository.remove(id, userId);
   }
 }

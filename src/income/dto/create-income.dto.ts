@@ -1,7 +1,3 @@
-export class CreateIncomeDto {
-  source!: string;
+import { CreateTransactionDto } from '../../common/dto/create-transaction.dto';
 
-  amount!: number;
-
-  date!: string;
-}
+export class CreateIncomeDto extends CreateTransactionDto {}

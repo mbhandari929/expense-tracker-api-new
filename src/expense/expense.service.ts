@@ -1,36 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Expense } from './entities/expense.entity';
+import { UserScopedRepository } from '../common/repositories/user-scoped.repository';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
+import { Expense } from './entities/expense.entity';
 
 @Injectable()
 export class ExpenseService {
+  private readonly userScopedRepository: UserScopedRepository<Expense>;
+
   constructor(
     @InjectRepository(Expense)
-    private expenseRepository: Repository<Expense>,
-  ) {}
-
-  create(createExpenseDto: CreateExpenseDto) {
-    const expense = this.expenseRepository.create(createExpenseDto);
-    return this.expenseRepository.save(expense);
+    expenseRepository: Repository<Expense>,
+  ) {
+    this.userScopedRepository = new UserScopedRepository(
+      expenseRepository,
+      'Expense',
+    );
   }
 
-  findAll() {
-    return this.expenseRepository.find();
+  create(createExpenseDto: CreateExpenseDto, userId: number) {
+    return this.userScopedRepository.create(createExpenseDto, userId);
   }
 
-  findOne(id: number) {
-    return this.expenseRepository.findOneBy({ id });
+  findAll(userId: number) {
+    return this.userScopedRepository.findAll(userId);
   }
 
-  async update(id: number, updateExpenseDto: UpdateExpenseDto) {
-    await this.expenseRepository.update(id, updateExpenseDto);
-    return this.expenseRepository.findOneBy({ id });
+  findOne(id: number, userId: number) {
+    return this.userScopedRepository.findOne(id, userId);
   }
 
-  remove(id: number) {
-    return this.expenseRepository.delete(id);
+  update(id: number, updateExpenseDto: UpdateExpenseDto, userId: number) {
+    return this.userScopedRepository.update(id, updateExpenseDto, userId);
+  }
+
+  remove(id: number, userId: number) {
+    return this.userScopedRepository.remove(id, userId);
   }
 }

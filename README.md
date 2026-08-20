@@ -1,98 +1,335 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Expense Tracker API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS backend API for the Expense Tracker application.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- User registration and login
+- JWT authentication
+- User-specific Income CRUD
+- User-specific Expense CRUD
+- User-specific Settings API
+- User-specific atomic JSON backup restore
+- Request validation
+- SQLite database with TypeORM
+- Configurable CORS
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Setup
 
-## Project setup
+Install dependencies:
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+Create and configure the `.env` file as described below.
+
+Run database migrations before starting the backend:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run migration:run
 ```
 
-## Run tests
+Because TypeORM `synchronize` is disabled, database schema changes must be applied through migrations.
+
+## Environment Variables
+
+Create a `.env` file from `.env.example`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Configure the following values in `.env`:
+
+```env
+NODE_ENV=development
+JWT_SECRET=your-jwt-secret-here
+CORS_ORIGIN=http://localhost:5173
+```
+
+`JWT_SECRET` is used to sign and verify JWT access tokens.
+
+`CORS_ORIGIN` specifies the frontend URL allowed to access the backend.
+
+The default frontend URL is:
+
+```text
+http://localhost:5173
+```
+
+Multiple origins can be separated using commas:
+
+```env
+CORS_ORIGIN=http://localhost:5173,https://your-frontend.example.com
+```
+
+## Start the Backend
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev
 ```
 
-## Deployment
+Backend URL:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+```text
+http://localhost:3000
+```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Build
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run build
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Authentication
 
-## Resources
+### Register
 
-Check out a few resources that may come in handy when working with NestJS:
+```text
+POST /auth/register
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Example:
 
-## Support
+```json
+{
+  "email": "test@example.com",
+  "password": "test1234"
+}
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Login
 
-## Stay in touch
+```text
+POST /auth/login
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Example:
 
-## License
+```json
+{
+  "email": "test@example.com",
+  "password": "test1234"
+}
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+A successful login returns a JWT access token:
+
+```json
+{
+  "access_token": "your-jwt-access-token"
+}
+```
+
+Protected API requests must include the JWT token:
+
+```text
+Authorization: Bearer <access_token>
+```
+
+## Rate Limiting
+
+The API uses request rate limiting.
+
+The default limit for API endpoints is:
+
+```text
+60 requests per minute
+```
+
+Authentication endpoints use stricter limits:
+
+```text
+POST /auth/register         5 requests per minute
+POST /auth/login            5 requests per minute
+POST /auth/forgot-password  3 requests per minute
+POST /auth/reset-password   5 requests per minute
+```
+
+These limits help reduce abuse and repeated authentication attempts.
+
+## Income API
+
+```text
+GET    /income
+GET    /income/:id
+POST   /income
+PATCH  /income/:id
+DELETE /income/:id
+```
+
+Example:
+
+```json
+{
+  "text": "Salary",
+  "amount": 50000,
+  "date": "2026-08-04"
+}
+```
+
+Income amounts must be greater than `0`.
+
+Income records are available only to the authenticated user who owns them.
+
+## Expense API
+
+```text
+GET    /expense
+GET    /expense/:id
+POST   /expense
+PATCH  /expense/:id
+DELETE /expense/:id
+```
+
+Example:
+
+```json
+{
+  "text": "Food",
+  "amount": 1000,
+  "date": "2026-08-04"
+}
+```
+
+Expense amounts must be greater than `0`.
+
+Expense records are available only to the authenticated user who owns them.
+
+## Settings API
+
+```text
+GET   /settings
+PATCH /settings
+```
+
+The Settings API stores:
+
+- Opening balance
+- Income sources
+- Expense sources
+- Monthly budgets
+
+Example:
+
+```json
+{
+  "openingBalance": 100000,
+  "incomeSources": ["Salary", "Bonus", "Other"],
+  "expenseSources": ["Food", "Rent", "Transport", "Other"],
+  "monthlyBudgets": {
+    "2026-08": 200000
+  }
+}
+```
+
+Monthly-budget keys must use the `YYYY-MM` format.
+
+Monthly-budget values must be non-negative numbers.
+
+Each authenticated user has their own settings.
+
+## Backup Restore API
+
+```text
+PUT /backup/restore
+```
+
+The endpoint requires JWT authentication:
+
+```text
+Authorization: Bearer <access_token>
+```
+
+Restore replaces only the authenticated user's existing:
+
+- Income transactions
+- Expense transactions
+- Settings
+
+Other users' data is not modified.
+
+The restore runs inside one database transaction.
+
+If restoration fails, all changes are rolled back.
+
+Transaction IDs are intentionally regenerated during restore.
+
+The frontend must use the records and IDs returned by the backend after the restore instead of relying on IDs from the backup JSON.
+
+Example response:
+
+```json
+{
+  "message": "Backup restored successfully",
+  "incomes": [
+    {
+      "id": 1,
+      "text": "Salary",
+      "amount": 50000,
+      "date": "2026-08-04"
+    }
+  ],
+  "expenses": [
+    {
+      "id": 1,
+      "text": "Food",
+      "amount": 1000,
+      "date": "2026-08-04"
+    }
+  ],
+  "settings": {
+    "openingBalance": 100000,
+    "incomeSources": ["Salary", "Bonus", "Other"],
+    "expenseSources": ["Food", "Rent", "Transport", "Other"],
+    "monthlyBudgets": {
+      "2026-08": 200000
+    }
+  }
+}
+```
+
+The IDs in this example are newly generated database IDs and are not guaranteed to match IDs contained in the imported backup.
+
+## CORS
+
+Allowed HTTP methods:
+
+```text
+GET
+POST
+PATCH
+PUT
+DELETE
+OPTIONS
+```
+
+Allowed request headers:
+
+```text
+Content-Type
+Authorization
+```
+
+## Database
+
+This project uses SQLite with TypeORM.
+
+```text
+expense.db
+```
+
+Database schema synchronization is disabled.
+
+After pulling schema changes or new migrations, run:
+
+```bash
+npm run migration:run
+```
+
+## Frontend Repository
+
+```text
+https://github.com/mbhandari929/expense-tracker
+```
