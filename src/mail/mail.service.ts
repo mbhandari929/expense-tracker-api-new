@@ -41,8 +41,8 @@ export class MailService {
     let resetUrl: URL;
 
     try {
-      resetUrl = new URL('/reset-password', frontendUrl);
-      resetUrl.hash = `token=${encodeURIComponent(resetToken)}`;
+      resetUrl = new URL('/', frontendUrl);
+      resetUrl.hash = `/reset-password?token=${encodeURIComponent(resetToken)}`;
     } catch (error) {
       this.logger.error(
         'FRONTEND_URL is invalid.',
